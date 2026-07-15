@@ -1,5 +1,7 @@
 # Mapa satelital del Archipiélago de Humboldt
 
+[![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
+
 Genera cartografía satelital de alta resolución del Archipiélago de Humboldt
 (islas Chañaral, Damas, Choros, Gaviota, Tilgo y Pájaros — regiones de Atacama
 y Coquimbo, Chile) lista para imprimir en plotter, usando exclusivamente
@@ -51,6 +53,8 @@ python -m venv .venv
 
 ## Fuentes de datos y licencias
 
+- **Código de este proyecto** — licencia [MIT](LICENSE). Las imágenes
+  satelitales tienen sus propias licencias, descritas a continuación.
 - **Esri World Imagery** — teselas de acceso público gratuito; requiere mantener
   la atribución *"Source: Esri, Maxar, Earthstar Geographics, and the GIS User
   Community"* (impresa al pie de la lámina). Para usos comerciales masivos,
