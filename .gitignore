@@ -1,0 +1,12 @@
+# Entorno virtual
+.venv/
+
+# Productos generados y caché de teselas (regenerables con generar_mapa.py)
+salida/
+
+# Python
+__pycache__/
+*.pyc
+
+# Configuración local de Claude Code
+.claude/settings.local.json

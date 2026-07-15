@@ -1,0 +1,7 @@
+contextily>=1.6
+matplotlib>=3.8
+pyproj>=3.6
+folium>=0.16
+pillow>=10.0
+numpy>=1.26
+requests>=2.31
