@@ -174,3 +174,39 @@ class TestImageResampling:
         assert result.shape == (100, 100, 3)
         # Scaled uniform image should remain uniform
         assert np.std(result) < 5  # Very low variance
+
+
+class TestTileSources:
+    """Test tile source configuration."""
+
+    def test_fuentes_structure(self):
+        """FUENTES dict should have required keys for each source."""
+        from generar_mapa import FUENTES
+
+        required_keys = {"nombre", "zoom", "atribucion"}
+
+        for fuente_name, fuente_config in FUENTES.items():
+            assert isinstance(fuente_name, str), f"Source name should be string: {fuente_name}"
+            assert isinstance(fuente_config, dict), f"Source config should be dict: {fuente_name}"
+            assert required_keys.issubset(fuente_config.keys()), \
+                f"Source '{fuente_name}' missing keys: {required_keys - set(fuente_config.keys())}"
+
+    def test_fuentes_zoom_levels(self):
+        """Zoom levels should be integers in reasonable range."""
+        from generar_mapa import FUENTES
+
+        for fuente_name, fuente_config in FUENTES.items():
+            zoom = fuente_config["zoom"]
+            assert isinstance(zoom, int), f"Zoom should be int for '{fuente_name}', got {type(zoom)}"
+            assert 0 <= zoom <= 20, f"Zoom out of range for '{fuente_name}': {zoom}"
+
+    def test_fuentes_attribution_strings(self):
+        """Attribution strings should not be empty."""
+        from generar_mapa import FUENTES
+
+        for fuente_name, fuente_config in FUENTES.items():
+            atribucion = fuente_config["atribucion"]
+            assert isinstance(atribucion, str), f"Attribution should be string for '{fuente_name}'"
+            assert len(atribucion) > 0, f"Attribution should not be empty for '{fuente_name}'"
+            assert "©" in atribucion or "Copernicus" in atribucion or "Esri" in atribucion or "Sentinel" in atribucion, \
+                f"Attribution missing expected credit marker for '{fuente_name}'"
