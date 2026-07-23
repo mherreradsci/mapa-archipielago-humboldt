@@ -220,24 +220,25 @@ def construir_imagen(
     """Ensambla la imagen final por bandas horizontales para acotar la RAM.
 
     En lugar de materializar el mosaico completo (>1 GB a zoom 15), descarga y
-    remuestrea franja por franja y las apila; el pico de memoria queda en la
-    imagen final más una sola franja.
+    remuestrea franja por franja escribiéndolas sobre la imagen final
+    preasignada; el pico de memoria queda en la imagen final más una sola
+    franja.
     """
     w, s, e, n = bbox
     px_w, px_h = px_destino
     bordes = np.linspace(0, px_h, n_bandas + 1).round().astype(int)
-    filas: list[np.ndarray] = []
+    imagen = np.empty((px_h, px_w, 3), dtype=np.uint8)
     for i in range(n_bandas):
         y0, y1 = int(bordes[i]), int(bordes[i + 1])
         n_i = n - (n - s) * (y0 / px_h)
         s_i = n - (n - s) * (y1 / px_h)
         print(f"  Banda {i + 1}/{n_bandas}…", flush=True)
         img, extent = descargar_mosaico((w, s_i, e, n_i), fuente, zoom)
-        filas.append(
-            recortar_y_remuestrear(img, extent, (w, s_i, e, n_i), (px_w, y1 - y0))
+        imagen[y0:y1] = recortar_y_remuestrear(
+            img, extent, (w, s_i, e, n_i), (px_w, y1 - y0)
         )
         del img
-    return np.vstack(filas)
+    return imagen
 
 
 # ---------------------------------------------------------------------------
@@ -348,6 +349,7 @@ def componer_lamina(
     bbox: tuple[float, float, float, float],
     fuente: str,
     dpi: int,
+    fig_dims: tuple[int, int],
 ) -> None:
     """Compone la lámina A0 y la guarda como PNG y PDF."""
     import matplotlib
@@ -361,7 +363,11 @@ def componer_lamina(
     fig = plt.figure(figsize=A0_PULGADAS, dpi=dpi)
     ax = fig.add_axes(RECT_EJES)
     w, s, e, n = bbox
-    ax.imshow(imagen, extent=(w, e, s, n), interpolation="none", zorder=1)
+    # El raster satelital no se dibuja con imshow para el PNG: el remuestreador
+    # de matplotlib convierte la imagen a RGBA float32, y a 600 DPI (~500 Mpx)
+    # eso agota la RAM. La lámina se dibuja sin imagen y con fondo
+    # transparente, y el satélite se compone después con Pillow en uint8.
+    ax.patch.set_visible(False)
     ax.set_xlim(w, e)
     ax.set_ylim(s, n)
     ax.set_xticks([])
@@ -391,10 +397,33 @@ def componer_lamina(
     )
 
     DIR_SALIDA.mkdir(parents=True, exist_ok=True)
-    for extension in ("png", "pdf"):
-        destino = DIR_SALIDA / f"mapa_humboldt_{fuente}.{extension}"
-        print(f"  Guardando {destino.name}…")
-        fig.savefig(destino, dpi=dpi, facecolor="white")
+
+    # PNG: adornos (grilla, textos, escala) renderizados sobre fondo
+    # transparente y compuestos con Pillow encima del satélite, byte a byte.
+    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}.png"
+    print(f"  Guardando {destino.name}…")
+    fig.patch.set_visible(False)
+    fig.canvas.draw()
+    ancho_px, alto_px = fig.canvas.get_width_height()
+    adornos = Image.frombuffer(
+        "RGBA", (ancho_px, alto_px), fig.canvas.buffer_rgba(), "raw", "RGBA", 0, 1
+    )
+    lamina = Image.new("RGB", (ancho_px, alto_px), "white")
+    x0 = int(RECT_EJES[0] * fig_dims[0])
+    y0 = fig_dims[1] - int(RECT_EJES[1] * fig_dims[1]) - imagen.shape[0]
+    lamina.paste(Image.fromarray(imagen), (x0, y0))
+    lamina.paste(adornos, (0, 0), adornos)
+    lamina.save(destino, dpi=(dpi, dpi))
+    del lamina, adornos
+
+    # PDF: el backend vectorial sí acepta la imagen sin remuestrear
+    # (interpolation="none" la incrusta tal cual y el visor la escala),
+    # así que aquí imshow no tiene el costo en RAM del caso PNG.
+    fig.patch.set_visible(True)
+    ax.imshow(imagen, extent=(w, e, s, n), interpolation="none", zorder=1)
+    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}.pdf"
+    print(f"  Guardando {destino.name}…")
+    fig.savefig(destino, dpi=dpi, facecolor="white")
     plt.close(fig)
 
 
@@ -415,7 +444,7 @@ def generar_raster(fuente: str, dpi: int, zoom_override: int | None) -> None:
     n_bandas = 8 if zoom >= 14 else 1
     imagen = construir_imagen(bbox, fuente, zoom, px_mapa, n_bandas)
     print(f"  Imagen ensamblada: {imagen.shape[1]}x{imagen.shape[0]} px", flush=True)
-    componer_lamina(imagen, bbox, fuente, dpi)
+    componer_lamina(imagen, bbox, fuente, dpi, (ancho_fig_px, alto_fig_px))
 
 
 # ---------------------------------------------------------------------------
