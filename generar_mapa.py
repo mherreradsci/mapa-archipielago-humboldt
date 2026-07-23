@@ -398,9 +398,12 @@ def componer_lamina(
 
     DIR_SALIDA.mkdir(parents=True, exist_ok=True)
 
+    # Dimensiones en formato wxh para el nombre del archivo
+    dim_str = f"{fig_dims[0]}x{fig_dims[1]}"
+
     # PNG: adornos (grilla, textos, escala) renderizados sobre fondo
     # transparente y compuestos con Pillow encima del satélite, byte a byte.
-    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}.png"
+    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}_{dim_str}.png"
     print(f"  Guardando {destino.name}…")
     fig.patch.set_visible(False)
     fig.canvas.draw()
@@ -421,7 +424,7 @@ def componer_lamina(
     # así que aquí imshow no tiene el costo en RAM del caso PNG.
     fig.patch.set_visible(True)
     ax.imshow(imagen, extent=(w, e, s, n), interpolation="none", zorder=1)
-    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}.pdf"
+    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}_{dim_str}.pdf"
     print(f"  Guardando {destino.name}…")
     fig.savefig(destino, dpi=dpi, facecolor="white")
     plt.close(fig)
