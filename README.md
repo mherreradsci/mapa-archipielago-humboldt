@@ -37,6 +37,17 @@ python -m venv .venv
 .venv/bin/python generar_mapa.py --zoom 16            # forzar zoom de teselas
 ```
 
+## Desarrollo
+
+```bash
+# Instalar además las herramientas de test y linting
+.venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+
+make test    # ejecutar tests con pytest
+make lint    # revisar estilo con ruff
+make check   # ambos
+```
+
 ## Requisitos del sistema
 
 | Requisito | Especificación |
