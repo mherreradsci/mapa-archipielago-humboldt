@@ -401,32 +401,34 @@ def componer_lamina(
     # Dimensiones en formato wxh para el nombre del archivo
     dim_str = f"{fig_dims[0]}x{fig_dims[1]}"
 
-    # PNG: adornos (grilla, textos, escala) renderizados sobre fondo
-    # transparente y compuestos con Pillow encima del satélite, byte a byte.
-    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}_{dim_str}.png"
-    print(f"  Guardando {destino.name}…")
+    # Adornos (grilla, textos, escala) renderizados sobre fondo transparente.
     fig.patch.set_visible(False)
     fig.canvas.draw()
     ancho_px, alto_px = fig.canvas.get_width_height()
     adornos = Image.frombuffer(
         "RGBA", (ancho_px, alto_px), fig.canvas.buffer_rgba(), "raw", "RGBA", 0, 1
     )
-    lamina = Image.new("RGB", (ancho_px, alto_px), "white")
     x0 = int(RECT_EJES[0] * fig_dims[0])
     y0 = fig_dims[1] - int(RECT_EJES[1] * fig_dims[1]) - imagen.shape[0]
+
+    # PNG: compuesto con Pillow encima del satélite, byte a byte.
+    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}_{dim_str}.png"
+    print(f"  Guardando {destino.name}…")
+    lamina = Image.new("RGB", (ancho_px, alto_px), "white")
     lamina.paste(Image.fromarray(imagen), (x0, y0))
     lamina.paste(adornos, (0, 0), adornos)
     lamina.save(destino, dpi=(dpi, dpi))
-    del lamina, adornos
+    del lamina
 
-    # PDF: el backend vectorial sí acepta la imagen sin remuestrear
-    # (interpolation="none" la incrusta tal cual y el visor la escala),
-    # así que aquí imshow no tiene el costo en RAM del caso PNG.
-    fig.patch.set_visible(True)
-    ax.imshow(imagen, extent=(w, e, s, n), interpolation="none", zorder=1)
-    destino = DIR_SALIDA / f"mapa_humboldt_{fuente}_{dim_str}.pdf"
-    print(f"  Guardando {destino.name}…")
-    fig.savefig(destino, dpi=dpi, facecolor="white")
+    # PDF: usa Pillow en lugar del backend de matplotlib (menor RAM).
+    destino_pdf = DIR_SALIDA / f"mapa_humboldt_{fuente}_{dim_str}.pdf"
+    print(f"  Guardando {destino_pdf.name}…")
+    lamina_pdf = Image.new("RGB", (ancho_px, alto_px), "white")
+    lamina_pdf.paste(Image.fromarray(imagen), (x0, y0))
+    lamina_pdf.paste(adornos, (0, 0), adornos)
+    lamina_pdf.save(destino_pdf, dpi=(dpi, dpi))
+    del lamina_pdf, adornos
+
     plt.close(fig)
 
 
