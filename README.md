@@ -37,18 +37,35 @@ python -m venv .venv
 .venv/bin/python generar_mapa.py --zoom 16            # forzar zoom de teselas
 ```
 
+## Requisitos del sistema
+
+| Requisito | Especificación |
+|-----------|---|
+| **Python** | 3.12 (definido en `.python-version`) |
+| **RAM** | Mínimo 2 GB; se recomienda 4+ GB para corridas a 300 DPI |
+| **Disco** | ~500 MB para salida (PNG + PDF + caché de teselas); se reutiliza en corridas siguientes |
+| **Red** | Conexión estable para descargar teselas (~4 000 de Esri, ~1 000 de EOX) |
+| **SO** | Linux, macOS, Windows con Python 3.12 |
+
+### Nota sobre RAM
+
+Desde la optimización de v0.2 (PDF generado con Pillow), el pico de memoria en una
+corrida 300 DPI es **~1.6 GB** (antes ~6–8 GB). Esto hace el script usable en
+sistemas con 4 GB RAM total. Para corridas a 75 DPI (prueba rápida), solo se necesita
+~500 MB.
+
 ## Notas técnicas
 
 - **Área**: bbox WGS84 −71.78 a −71.22 lon, −29.68 a −28.92 lat, ajustado
   automáticamente a la proporción exacta de un A0 retrato en Web Mercator
   (EPSG:3857) para que la imagen llene la página sin deformación.
-- **Resolución**: el PNG A0 mide ~9933 × 14043 px (~150–350 MB). El PDF incrusta
-  el raster a resolución completa; es el formato recomendado para el plotter.
+- **Resolución**: el PNG A0 mide ~9933 × 14043 px (~86 MB). El PDF incrusta
+  el raster a resolución completa (~11 MB comprimido); es el formato recomendado para el plotter.
 - **Teselas**: se descargan con `contextily` y quedan en caché en
   `salida/.cache_teselas/`, así las corridas siguientes no vuelven a descargar.
   La corrida completa baja ~4 000 teselas Esri (zoom 15) y ~1 000 de EOX
-  (zoom 14); requiere red estable y ~4 GB de RAM libres.
-- **Requisitos**: solo `contextily`, `matplotlib`, `pyproj`, `folium`, `pillow`,
+  (zoom 14).
+- **Requisitos Python**: solo `contextily`, `matplotlib`, `pyproj`, `folium`, `pillow`,
   `numpy`, `requests` — sin GDAL ni cartopy.
 
 ## Fuentes de datos y licencias
