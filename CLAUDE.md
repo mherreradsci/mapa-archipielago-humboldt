@@ -25,7 +25,20 @@ python -m venv .venv
 .venv/bin/python generar_mapa.py --zoom 16          # force tile zoom level
 ```
 
-There are no tests or linters configured. To verify changes, run with `--dpi 75` (fast, uses tile cache) rather than a full 300 DPI run, which takes a long time and heavy downloads.
+Tests and linting are configured. To verify changes before running the full map generator:
+
+```bash
+# Run all tests (unit tests for geo utilities, image processing)
+make test              # or: .venv/bin/python -m pytest tests/ -v
+
+# Check code style with ruff
+make lint              # or: .venv/bin/ruff check generar_mapa.py
+
+# Both at once
+make check
+```
+
+Also, test with `--dpi 75` (fast, uses tile cache) rather than a full 300 DPI run, which takes a long time and heavy downloads.
 
 Outputs go to `salida/`; downloaded tiles are cached in `salida/.cache_teselas/` (contextily cache), so repeated runs don't re-download.
 

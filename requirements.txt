@@ -5,3 +5,7 @@ folium>=0.16
 pillow>=10.0
 numpy>=1.26
 requests>=2.31
+
+# Development: testing and linting
+pytest>=7.4
+ruff>=0.1
